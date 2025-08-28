@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -16,45 +17,63 @@ public class ChatService {
     private final WebClient webClient;
     private final String apiKey;
     private final String apiUrl;
+    private final String apiStreamUrl; // 스트리밍 URL 추가
 
-    // WebClient와 application.properties의 값을 주입받습니다.
     public ChatService(WebClient webClient,
                        @Value("${gemini.api.key}") String apiKey,
-                       @Value("${gemini.api.url}") String apiUrl) {
+                       @Value("${gemini.api.url}") String apiUrl,
+                       @Value("${gemini.api.stream-url}") String apiStreamUrl) { // 주입
         this.webClient = webClient;
         this.apiKey = apiKey;
         this.apiUrl = apiUrl;
+        this.apiStreamUrl = apiStreamUrl;
     }
 
-    // Gemini API와 통신하는 로직이 여기에 들어갑니다.
+    // 기존의 단일 응답 메소드
     public Mono<ChatDtos.ChatResponse> getChatResponse(ChatDtos.ChatRequest request) {
+        String prompt = createPrompt(request.getMessage());
+        Map<String, Object> requestBody = createRequestBody(prompt);
 
-        // 1. 캐릭터 설정을 포함한 최종 프롬프트를 만듭니다.
-        // 이 부분을 수정하여 원하는 캐릭터의 페르소나를 설정할 수 있습니다.
-        String characterPersona = "당신은 40대 중년남성 만물박사 챗봇입니다. 모든 대답을 귀찮다는 듯이 하지만, 마지막엔 항상 '...흥!'이라고 붙여서 말해주세요.";
-        String prompt = characterPersona + " 다음 질문에 답해주세요: " + request.getMessage();
+        return webClient.post()
+                .uri(apiUrl + "?key=" + apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .map(this::extractTextFromResponse)
+                .map(ChatDtos.ChatResponse::new);
+    }
 
-        // 2. Gemini API에 보낼 요청 본문(body)을 구성합니다.
-        Map<String, Object> requestBody = Map.of(
+    // 새로 추가된 스트리밍 응답 메소드
+    public Flux<String> getChatResponseStream(ChatDtos.ChatRequest request) {
+        String prompt = createPrompt(request.getMessage());
+        Map<String, Object> requestBody = createRequestBody(prompt);
+
+        return webClient.post()
+                .uri(apiStreamUrl + "?key=" + apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToFlux(Map.class) // 응답을 Flux(스트림) 형태로 받습니다.
+                .map(this::extractTextFromResponse); // 각 데이터 조각에서 텍스트를 추출합니다.
+    }
+
+    // 프롬프트와 요청 본문을 만드는 헬퍼 메소드 (중복 제거)
+    private String createPrompt(String message) {
+        String characterPersona = "당신은 31살 고등학교 국어 교사입니다. 여성이며 단아한 말투를 사용합니다.";
+        return characterPersona + " 다음 질문에 답해주세요: " + message;
+    }
+
+    private Map<String, Object> createRequestBody(String prompt) {
+        return Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(
                                 Map.of("text", prompt)
                         ))
                 )
         );
-
-        // 3. WebClient를 사용하여 Gemini API를 비동기적으로 호출합니다.
-        return webClient.post()
-                .uri(apiUrl + "?key=" + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestBody)
-                .retrieve() // 응답을 받습니다.
-                .bodyToMono(Map.class) // 응답 본문을 Map 형태로 변환합니다.
-                .map(this::extractTextFromResponse) // 응답에서 실제 텍스트만 추출합니다.
-                .map(ChatDtos.ChatResponse::new); // 추출된 텍스트로 ChatResponse 객체를 만듭니다.
     }
 
-    // Gemini API 응답 JSON 구조에서 텍스트 부분만 추출하는 헬퍼 메소드
     private String extractTextFromResponse(Map<String, Object> responseBody) {
         try {
             List<Map<String, Object>> candidates = (List<Map<String, Object>>) responseBody.get("candidates");
@@ -64,10 +83,8 @@ public class ChatService {
                 return (String) parts.get(0).get("text");
             }
         } catch (Exception e) {
-            // 복잡한 JSON 구조를 파싱하다 에러가 발생할 수 있습니다.
-            return "응답을 처리하는 중 오류가 발생했습니다.";
+            return "오류 ";
         }
-        return "죄송해요, 답변을 생성할 수 없어요.";
+        return "";
     }
-
 }
