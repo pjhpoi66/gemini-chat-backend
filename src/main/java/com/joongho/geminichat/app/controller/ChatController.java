@@ -27,8 +27,8 @@ public class ChatController {
     }
 
     // 새로 추가된 스트리밍 응답 API
-    @PostMapping(value = "/stream", produces = MediaType.APPLICATION_NDJSON_VALUE)
-    public Flux<String> chatWithCharacterStream(@RequestBody ChatDtos.ChatRequest request) {
-        return chatService.getChatResponseStream(request);
-    }
+//    @PostMapping(value = "/stream", produces = MediaType.APPLICATION_NDJSON_VALUE)
+//    public Flux<String> chatWithCharacterStream(@RequestBody ChatDtos.ChatRequest request) {
+//        return chatService.getChatResponseStream(request);
+//    }
 }
