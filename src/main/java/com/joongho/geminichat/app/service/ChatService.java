@@ -18,23 +18,20 @@ public class ChatService {
     private final WebClient webClient;
     private final String apiKey;
     private final String apiStreamUrl;
-    private final String chatPersona;
     private final String apiUrl;
 
     public ChatService(WebClient webClient,
                        @Value("${gemini.api.key}") String apiKey,
-                       @Value("${chat.persona}") String chatPersona,
                        @Value("${gemini.api.url}") String apiUrl,
                        @Value("${gemini.api.stream-url}") String apiStreamUrl) {
         this.webClient = webClient;
         this.apiKey = apiKey;
         this.apiStreamUrl = apiStreamUrl;
         this.apiUrl = apiUrl;
-        this.chatPersona = chatPersona;
     }
 
     public Flux<String> getChatResponseStream(ChatDtos.ChatRequest request) {
-        Map<String, Object> requestBody = createGeminiRequestBody(request.getHistory());
+        Map<String, Object> requestBody = createGeminiRequestBody(request.getHistory(), request.getPersona());
 
         System.out.println();
 
@@ -47,9 +44,9 @@ public class ChatService {
                 .map(this::extractTextFromResponse);
     }
 
-    // 새로 추가된 단일 응답 메소드
     public Mono<ChatDtos.ChatResponse> getChatResponseSimple(ChatDtos.ChatRequest request) {
-        Map<String, Object> requestBody = createGeminiRequestBody(request.getHistory());
+        // createGeminiRequestBody 메소드에 persona를 전달합니다.
+        Map<String, Object> requestBody = createGeminiRequestBody(request.getHistory(), request.getPersona());
 
         return webClient.post()
                 .uri(apiUrl + "?key=" + apiKey)
@@ -62,9 +59,8 @@ public class ChatService {
     }
 
     // Gemini API가 요구하는 형식에 맞게 대화 기록을 변환합니다.
-    private Map<String, Object> createGeminiRequestBody(List<ChatDtos.MessageDto> history) {
-
-        // Gemini의 contents 형식에 맞게 변환
+    // persona 파라미터를 받도록 수정합니다.
+    private Map<String, Object> createGeminiRequestBody(List<ChatDtos.MessageDto> history, String persona) {
         List<Map<String, Object>> contents = history.stream()
                 .map(msg -> Map.of(
                         "role", msg.getRole(),
@@ -72,11 +68,11 @@ public class ChatService {
                 ))
                 .toList();
 
-        // 시스템 페르소나와 대화 기록을 함께 요청 본문에 담습니다.
+        // 하드코딩된 페르소나 대신 전달받은 persona를 사용합니다.
         return Map.of(
                 "contents", contents,
                 "systemInstruction", Map.of(
-                        "parts", List.of(Map.of("text", chatPersona))
+                        "parts", List.of(Map.of("text", persona))
                 )
         );
     }

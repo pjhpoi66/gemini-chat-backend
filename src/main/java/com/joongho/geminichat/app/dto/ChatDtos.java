@@ -14,6 +14,7 @@ public class ChatDtos {
     public static class ChatRequest {
         // 기존 message 필드 대신 history 리스트를 받습니다.
         private List<MessageDto> history;
+        private String persona;
     }
 
     @Getter
