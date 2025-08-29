@@ -19,10 +19,11 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    @PostMapping
-    public Mono<ResponseEntity<ChatDtos.ChatResponse>> chatWithCharacter(@RequestBody ChatDtos.ChatRequest request) {
-        return chatService.getChatResponse(request)
-                .map(response -> ResponseEntity.ok(response));
+    // 새로 추가된 단일 응답 API
+    @PostMapping("/simple")
+    public Mono<ResponseEntity<ChatDtos.ChatResponse>> chatWithCharacterSimple(@RequestBody ChatDtos.ChatRequest request) {
+        return chatService.getChatResponseSimple(request)
+                .map(ResponseEntity::ok);
     }
 
     // 새로 추가된 스트리밍 응답 API
