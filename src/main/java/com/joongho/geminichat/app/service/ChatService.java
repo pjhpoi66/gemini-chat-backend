@@ -20,6 +20,10 @@ public class ChatService {
     private final String apiKey;
     private final String apiUrl;
 
+    // 기억할 최대 메시지 개수(사용자 질문 + AI 답변 = 2)를 상수로 정의
+    // MAX_HISTORY_SIZE = 20 이면, 최근 10번의 대화를 기억합니다.
+    private static final int MAX_HISTORY_SIZE = 20;
+
     public ChatService(WebClient webClient,
                        @Value("${gemini.api.key}") String apiKey,
                        @Value("${gemini.api.url}") String apiUrl) {
@@ -42,7 +46,17 @@ public class ChatService {
     }
 
     private Map<String, Object> createGeminiRequestBody(List<ChatDtos.MessageDto> history, String persona) {
-        List<Map<String, Object>> contents = history.stream()
+
+        // Sliding Window 로직 추가
+        List<ChatDtos.MessageDto> recentHistory = history;
+        if (history.size() > MAX_HISTORY_SIZE) {
+            // 전체 대화 기록이 최대치보다 크면, 가장 최근 N개만 잘라냅니다.
+            int startIndex = history.size() - MAX_HISTORY_SIZE;
+            recentHistory = history.subList(startIndex, history.size());
+        }
+
+        // 이제 전체 history 대신, 잘라낸 recentHistory를 사용합니다.
+        List<Map<String, Object>> contents = recentHistory.stream()
                 .map(msg -> Map.of(
                         "role", msg.getRole(),
                         "parts", List.of(Map.of("text", msg.getText()))
@@ -55,7 +69,6 @@ public class ChatService {
                 "topP", 1.0
         );
 
-        // 안전 설정 추가: 유해성 콘텐츠 차단 임계값을 완화합니다.
         List<Map<String, String>> safetySettings = List.of(
                 Map.of("category", "HARM_CATEGORY_HARASSMENT", "threshold", "BLOCK_NONE"),
                 Map.of("category", "HARM_CATEGORY_HATE_SPEECH", "threshold", "BLOCK_NONE"),
