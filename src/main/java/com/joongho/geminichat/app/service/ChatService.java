@@ -2,16 +2,14 @@ package com.joongho.geminichat.app.service;
 
 import com.joongho.geminichat.app.domain.ChatMessage;
 import com.joongho.geminichat.app.domain.ChatSession;
-import com.joongho.geminichat.app.domain.User;
+import com.joongho.geminichat.auth.domain.User;
 import com.joongho.geminichat.app.dto.ChatDtos;
 import com.joongho.geminichat.app.repository.ChatMessageRepository;
 import com.joongho.geminichat.app.repository.ChatSessionRepository;
-import com.joongho.geminichat.app.repository.UserRepository;
+import com.joongho.geminichat.auth.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;

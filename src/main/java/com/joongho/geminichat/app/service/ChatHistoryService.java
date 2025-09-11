@@ -1,10 +1,10 @@
 package com.joongho.geminichat.app.service;
 
 import com.joongho.geminichat.app.domain.ChatSession;
-import com.joongho.geminichat.app.domain.User;
+import com.joongho.geminichat.auth.domain.User;
 import com.joongho.geminichat.app.dto.ChatHistoryDtos;
 import com.joongho.geminichat.app.repository.ChatSessionRepository;
-import com.joongho.geminichat.app.repository.UserRepository;
+import com.joongho.geminichat.auth.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

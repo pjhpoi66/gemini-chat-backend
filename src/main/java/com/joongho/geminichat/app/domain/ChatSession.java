@@ -1,5 +1,6 @@
 package com.joongho.geminichat.app.domain;
 
+import com.joongho.geminichat.auth.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
