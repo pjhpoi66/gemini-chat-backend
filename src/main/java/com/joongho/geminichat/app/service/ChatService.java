@@ -1,10 +1,19 @@
 package com.joongho.geminichat.app.service;
 
+import com.joongho.geminichat.app.domain.ChatMessage;
+import com.joongho.geminichat.app.domain.ChatSession;
+import com.joongho.geminichat.app.domain.User;
 import com.joongho.geminichat.app.dto.ChatDtos;
+import com.joongho.geminichat.app.repository.ChatMessageRepository;
+import com.joongho.geminichat.app.repository.ChatSessionRepository;
+import com.joongho.geminichat.app.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -16,6 +25,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ChatService {
 
+    private final UserRepository userRepository;
+    private final ChatSessionRepository chatSessionRepository;
+    private final ChatMessageRepository chatMessageRepository;
+
     private final WebClient webClient;
     private final String apiKey;
     private final String apiUrl;
@@ -24,25 +37,36 @@ public class ChatService {
     // MAX_HISTORY_SIZE = 20 이면, 최근 10번의 대화를 기억합니다.
     private static final int MAX_HISTORY_SIZE = 20;
 
-    public ChatService(WebClient webClient,
+    public ChatService(UserRepository userRepository, ChatSessionRepository chatSessionRepository, ChatMessageRepository chatMessageRepository, WebClient webClient,
                        @Value("${gemini.api.key}") String apiKey,
                        @Value("${gemini.api.url}") String apiUrl) {
+        this.userRepository = userRepository;
+        this.chatSessionRepository = chatSessionRepository;
+        this.chatMessageRepository = chatMessageRepository;
         this.webClient = webClient;
         this.apiKey = apiKey;
         this.apiUrl = apiUrl;
     }
 
+    @Transactional
     public Mono<ChatDtos.ChatResponse> getChatResponseSimple(ChatDtos.ChatRequest request) {
-        Map<String, Object> requestBody = createGeminiRequestBody(request.getHistory(), request.getPersona());
 
+        ChatSession session = findOrCreateSession(request);
+
+        saveMessage(session, "user", request.getHistory().get(request.getHistory().size() - 1).getText());
+
+        Map<String, Object> requestBody = createGeminiRequestBody(request.getHistory(), request.getPersona());
         return webClient.post()
                 .uri(apiUrl + "?key=" + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
-                .map(this::extractTextFromResponse)
-                .map(ChatDtos.ChatResponse::new);
+                .flatMap(responseBody -> {
+                    String aiResponse = extractTextFromResponse(responseBody);
+                    saveMessage(session, "model", aiResponse);
+
+                    return Mono.just(new ChatDtos.ChatResponse(session.getId(), aiResponse));
+                });
     }
 
     private Map<String, Object> createGeminiRequestBody(List<ChatDtos.MessageDto> history, String persona) {
@@ -96,7 +120,7 @@ public class ChatService {
                 if (content != null) {
                     List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
                     if (parts != null && !parts.isEmpty()) {
-                        return (String) parts.get(0).get("text");
+                        return (String) parts.getFirst().get("text");
                     }
                 }
             }
@@ -105,4 +129,26 @@ public class ChatService {
         }
         return "죄송해요, 답변을 생성하는 데 문제가 생겼어요.";
     }
+    private ChatSession findOrCreateSession(ChatDtos.ChatRequest request) {
+        if (request.getSessionId() != null) {
+            return chatSessionRepository.findById(request.getSessionId())
+                    .orElseThrow(() -> new EntityNotFoundException("채팅 세션을 찾을 수 없습니다: " + request.getSessionId()));
+        } else {
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다: " + request.getUserId()));
+            ChatSession newSession = new ChatSession();
+            newSession.setUser(user);
+            newSession.setPersona(request.getPersona());
+            return chatSessionRepository.save(newSession);
+        }
+    }
+
+    private void saveMessage(ChatSession session, String role, String text) {
+        ChatMessage message = new ChatMessage();
+        message.setSession(session);
+        message.setRole(role);
+        message.setText(text);
+        chatMessageRepository.save(message);
+    }
+
 }

@@ -19,7 +19,6 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    // 새로 추가된 단일 응답 API
     @PostMapping("/simple")
     public Mono<ResponseEntity<ChatDtos.ChatResponse>> chatWithCharacterSimple(@RequestBody ChatDtos.ChatRequest request) {
         return chatService.getChatResponseSimple(request)
