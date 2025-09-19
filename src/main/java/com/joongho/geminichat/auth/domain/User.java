@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "gem_chat")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,12 +20,12 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // ◀◀ 타입을 String에서 Long으로 수정했습니다.
+    private Long id;
 
     @Column(nullable = false, length = 50, unique = true) // unique = true 추가
     private String username;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String password;
 
     @CreationTimestamp
@@ -35,7 +35,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatSession> sessions = new ArrayList<>();
 
-    // AuthService에서 사용할 수 있도록 생성자 추가
     public User(String username, String password) {
         this.username = username;
         this.password = password;
