@@ -2,20 +2,22 @@ package com.joongho.geminichat.auth.domain;
 
 import com.joongho.geminichat.app.domain.ChatSession;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
 @Table(name = "users", schema = "gem_chat")
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
 
     @Id
@@ -35,8 +37,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatSession> sessions = new ArrayList<>();
 
+    @Builder
     public User(String username, String password) {
         this.username = username;
         this.password = password;
     }
+
+
 }

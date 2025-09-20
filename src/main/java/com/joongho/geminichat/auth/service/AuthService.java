@@ -23,18 +23,18 @@ public class AuthService {
     private final JwtTokenProvider tokenProvider;
 
     @Transactional
-    public User registerUser(AuthDtos.RegisterRequest registerRequest) {
+    public void registerUser(AuthDtos.RegisterRequest registerRequest) {
         // 사용자 이름 중복 확인
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
             throw new IllegalStateException("이미 존재하는 사용자 이름입니다.");
         }
 
-        User user = new User(
-                registerRequest.getUsername(),
-                passwordEncoder.encode(registerRequest.getPassword())
-        );
+        User user = User.builder()
+                .username(registerRequest.getUsername())
+                .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .build();
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     public AuthDtos.AuthResponse loginUser(AuthDtos.LoginRequest loginRequest) {
@@ -49,10 +49,8 @@ public class AuthService {
 
         String token = tokenProvider.generateToken(authentication);
 
-        User user = userRepository.findByUsername(loginRequest.getUsername())
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
-
-        return new AuthDtos.AuthResponse(user.getUsername(), token);
+        String username = authentication.getName();
+        return new AuthDtos.AuthResponse(username, token);
     }
 
 }

@@ -1,40 +1,74 @@
 package com.joongho.geminichat.app.dto;
 
+import com.joongho.geminichat.app.domain.ChatMessage;
+import com.joongho.geminichat.app.domain.ChatSession;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ChatDtos {
 
+    // --- 요청(Request) DTO ---
+
     @Getter
-    @Setter
     @NoArgsConstructor
-    public static class ChatRequest {
-        private String persona; // 새로운 대화 시작 시 사용할 페르소나
-        private Long sessionId; // 기존 대화를 이어갈 때 사용하는 세션 ID (새 대화일 경우 null)
-        private List<MessageDto> history; // Gemini API에 보낼 대화 기록
+    public static class CreateRequest {
+        private String persona;
     }
 
     @Getter
-    @Setter
     @NoArgsConstructor
-    public static class MessageDto {
-        private String role;
+    public static class MessageRequest {
         private String text;
     }
 
+
+    // --- 응답(Response) DTO ---
+
     @Getter
-    @Setter
-    public static class ChatResponse {
-        private Long sessionId; // 프론트엔드가 다음 요청에 사용할 수 있도록 세션 ID를 응답에 포함
+    public static class SessionResponse {
+        private final Long id;
+        private final String persona;
+        private final LocalDateTime createdAt;
 
-        private String response;
+        public SessionResponse(ChatSession session) {
+            this.id = session.getId();
+            this.persona = session.getPersona();
+            this.createdAt = session.getCreatedAt();
+        }
+    }
 
-        public ChatResponse(Long sessionId, String response) {
-            this.sessionId = sessionId;
-            this.response = response;
+    @Getter
+    public static class MessageResponse {
+        private final Long id;
+        private final String role;
+        private final String text;
+        private final LocalDateTime createdAt;
+
+        public MessageResponse(ChatMessage message) {
+            this.id = message.getId();
+            this.role = message.getRole();
+            this.text = message.getText();
+            this.createdAt = message.getCreatedAt();
+        }
+    }
+
+    // 채팅방의 모든 메시지를 담는 응답 DTO
+    @Getter
+    public static class MessageHistoryResponse {
+        private final Long sessionId;
+        private final String persona;
+        private final List<MessageResponse> messages;
+
+        public MessageHistoryResponse(ChatSession session) {
+            this.sessionId = session.getId();
+            this.persona = session.getPersona();
+            this.messages = session.getMessages().stream()
+                    .map(MessageResponse::new)
+                    .collect(Collectors.toList());
         }
     }
 }

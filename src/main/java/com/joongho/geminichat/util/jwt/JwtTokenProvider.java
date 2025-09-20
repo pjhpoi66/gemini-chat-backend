@@ -1,7 +1,6 @@
 package com.joongho.geminichat.util.jwt;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +15,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -55,7 +53,6 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // JWT 토큰에서 사용자 이름(username) 추출
     public String getUsernameFromJWT(String token) {
         return Jwts.parser()
                 .verifyWith((SecretKey) key)
@@ -65,27 +62,25 @@ public class JwtTokenProvider {
                 .getSubject();
     }
 
-    // JWT 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
     public Authentication getAuthentication(String accessToken) {
-        // 토큰 복호화
         Claims claims = parseClaims(accessToken);
 
         if (claims.get("auth") == null) {
             throw new RuntimeException("권한 정보가 없는 토큰입니다.");
         }
 
-        // 클레임에서 권한 정보 가져오기
         Collection<? extends GrantedAuthority> authorities =
                 Arrays.stream(claims.get("auth").toString().split(","))
+                        .filter(auth -> !auth.trim().isEmpty())
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        // UserDetails 객체를 만들어서 Authentication 리턴
+        // 여기서 Spring Security의 User 객체를 사용합니다.
         UserDetails principal = new User(claims.getSubject(), "", authorities);
+
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 
-    // 토큰 정보를 검증하는 메서드
     public boolean validateToken(String token) {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
@@ -102,7 +97,6 @@ public class JwtTokenProvider {
         return false;
     }
 
-    // Request Header 에서 토큰 정보 추출
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {

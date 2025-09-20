@@ -1,19 +1,17 @@
 package com.joongho.geminichat.app.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 
+
 @Entity
-@Table(name = "chat_messages")
+@Table(name = "chat_messages", schema = "gem_chat")
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessage {
 
     @Id
@@ -22,7 +20,7 @@ public class ChatMessage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false)
-    private ChatSession session;
+    private ChatSession chatSession;
 
     @Column(nullable = false, length = 10)
     private String role; // "user" 또는 "model"
@@ -30,8 +28,19 @@ public class ChatMessage {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String text;
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    @Builder
+    public ChatMessage(ChatSession chatSession, String role, String text) {
+        this.chatSession = chatSession;
+        this.role = role;
+        this.text = text;
+    }
 
 }

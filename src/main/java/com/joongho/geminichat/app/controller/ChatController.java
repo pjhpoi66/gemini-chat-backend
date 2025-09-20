@@ -1,39 +1,81 @@
 package com.joongho.geminichat.app.controller;
 
+import com.joongho.geminichat.app.domain.ChatSession;
 import com.joongho.geminichat.app.dto.ChatDtos;
 import com.joongho.geminichat.app.service.ChatService;
+import com.joongho.geminichat.auth.domain.User;
+import com.joongho.geminichat.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.security.Principal;
-import java.util.Map;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chats")
 @RequiredArgsConstructor
-@Slf4j
 public class ChatController {
 
     private final ChatService chatService;
+    private final UserRepository userRepository;
 
-    @PostMapping("/simple")
-    public ResponseEntity<Map<String, Long>> chatWithCharacterSimple(
-            @RequestBody ChatDtos.ChatRequest request, Principal principal) {
+    // --- 1. 새 채팅방 만들기 (수정) ---
+    @PostMapping
+    public ResponseEntity<ChatDtos.SessionResponse> createChat(
+            Authentication authentication,
+            @RequestBody ChatDtos.CreateRequest request) {
+        String username = authentication.getName();
 
-        // 서비스의 비동기 메소드를 호출하고, 생성되거나 사용된 세션 ID를 받습니다.
-        Long sessionId = chatService.initiateChatStream(request, principal);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // 클라이언트가 스트림에 연결할 수 있도록 세션 ID를 반환합니다.
-        return ResponseEntity.ok(Map.of("sessionId", sessionId));
+        ChatSession newSession = chatService.createChatSession(user, request.getPersona());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ChatDtos.SessionResponse(newSession));
     }
 
-    // streamChatResponse 메소드는 그대로 둡니다.
-    @GetMapping(value = "/stream/{sessionId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamChatResponse(@PathVariable Long sessionId) {
-        return chatService.addEmitter(sessionId);
+    // --- 2. 기존 채팅방 목록 불러오기 (수정) ---
+    @GetMapping
+    public ResponseEntity<List<ChatDtos.SessionResponse>> getChatSessions(Authentication authentication) {
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        List<ChatDtos.SessionResponse> sessions = chatService.findChatSessionsByUser(user);
+        return ResponseEntity.ok(sessions);
+    }
+
+    // --- 3. 기존 채팅방 대화 기록 불러오기 (수정) ---
+    @GetMapping("/{sessionId}/messages")
+    public ResponseEntity<ChatDtos.MessageHistoryResponse> getChatHistory(
+            Authentication authentication,
+            @PathVariable Long sessionId) {
+
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        ChatDtos.MessageHistoryResponse history = chatService.findMessagesBySessionId(sessionId, user);
+        return ResponseEntity.ok(history);
+    }
+
+    // --- 4. 새 메시지 보내기 (수정) ---
+    @PostMapping("/{sessionId}/messages")
+    public ResponseEntity<ChatDtos.MessageResponse> postMessage(
+            Authentication authentication,
+            @PathVariable Long sessionId,
+            @RequestBody ChatDtos.MessageRequest request) {
+
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        ChatDtos.MessageResponse response = chatService.postMessage(sessionId, user, request.getText());
+        return ResponseEntity.ok(response);
     }
 }
