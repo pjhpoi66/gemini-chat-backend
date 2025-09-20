@@ -15,6 +15,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -29,7 +31,7 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey,
                             @Value("${jwt.expiration}") long expiration) {
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration;
     }
 
@@ -40,26 +42,24 @@ public class JwtTokenProvider {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
-        long now = (new Date()).getTime();
-        // Access Token 만료 시간 (예: 1시간)
-        Date accessTokenExpiresIn = new Date(now + expiration);
+        try {
+            Instant now = Instant.now();
+            // Access Token 만료 시간 (예: 1시간)
+            Instant accessTokenExpiresIn = now.plusMillis(expiration);
 
-        // Access Token 생성
-        return Jwts.builder()
-                .subject(authentication.getName())
-                .claim("auth", authorities)
-                .expiration(accessTokenExpiresIn)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
+            // Access Token 생성
+            return Jwts.builder()
+                    .subject(authentication.getName())
+                    .claim("auth", authorities)
+                    .expiration(Date.from(accessTokenExpiresIn))
+                    .signWith(key)
+                    .compact();
 
-    public String getUsernameFromJWT(String token) {
-        return Jwts.parser()
-                .verifyWith((SecretKey) key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        } catch (Exception e) {
+            log.error("JWT 토큰 생성 중 오류 발생", e);
+            throw new RuntimeException("JWT 토큰 생성에 실패했습니다", e);
+        }
+
     }
 
     public Authentication getAuthentication(String accessToken) {
@@ -75,7 +75,6 @@ public class JwtTokenProvider {
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-        // 여기서 Spring Security의 User 객체를 사용합니다.
         UserDetails principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
