@@ -23,7 +23,7 @@ WORKDIR /app
 
 # 빌드 단계(builder)에서 생성된 JAR 파일을 복사해옵니다.
 # JAR 파일 이름은 본인 프로젝트에 맞게 수정해야 할 수 있습니다.
-COPY --from=builder /build/libs/gemini-chat-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /build/build/libs/gemini-chat-0.0.1-SNAPSHOT.jar app.jar
 
 # 컨테이너 외부로 노출할 포트를 지정합니다 (백엔드는 8081 포트 사용).
 EXPOSE 8081
