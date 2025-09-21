@@ -1,5 +1,6 @@
 package com.joongho.geminichat.core;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -9,10 +10,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final LogInterceptor logInterceptor;
+    private final String ec2Url;
 
 
-    public WebConfig(LogInterceptor logInterceptor) {
+    public WebConfig(LogInterceptor logInterceptor, @Value("${ec2.url}") String ec2Url) {
         this.logInterceptor = logInterceptor;
+        this.ec2Url = ec2Url;
     }
 
 
@@ -27,7 +30,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "http://localhost:3001")
+                .allowedOrigins("http://localhost:3000", "http://localhost:3001", ec2Url)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
