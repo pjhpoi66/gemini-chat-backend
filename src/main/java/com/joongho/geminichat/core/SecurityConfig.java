@@ -58,7 +58,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // 이 부분을 추가해주세요!
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -69,8 +68,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(Arrays.asList(
-                ec2Url, // 배포된 프론트엔드 주소
-                "http://localhost:3000"
+                ec2Url, "http://localhost:3000"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
