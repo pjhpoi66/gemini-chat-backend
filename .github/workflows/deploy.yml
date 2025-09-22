@@ -23,5 +23,6 @@ jobs:
             
             docker stop gemini-backend-prod || true
             docker rm gemini-backend-prod || true
+            docker rmi gemini-backend-prod || true
             
             docker run -d --restart always --network=host --name gemini-backend-prod gemini-backend
