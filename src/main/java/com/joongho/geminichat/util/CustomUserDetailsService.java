@@ -21,11 +21,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(userName)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + userName));
 
-        // Spring Security의 UserDetails 객체로 변환하여 반환
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                new ArrayList<>() // 역할(Roles) 목록, 지금은 비워둠
+                new ArrayList<>()
         );
     }
 

@@ -32,7 +32,7 @@ public class GeminiApiService {
 
         // 1. 페르소나 설정 (System Instruction)
         GeminiDtos.Content systemInstruction = new GeminiDtos.Content(
-                null, // role is not needed for system_instruction
+                null,
                 List.of(new GeminiDtos.Part(persona))
         );
 
@@ -54,12 +54,12 @@ public class GeminiApiService {
                     .header("Content-Type", "application/json")
                     .body(Mono.just(requestBody), GeminiDtos.GeminiRequest.class)
                     .retrieve() // 응답을 받기 시작
-                    .bodyToMono(GeminiDtos.GeminiResponse.class) // 응답 본문을 GeminiResponse로 변환
-                    .block(); // 비동기 작업이 완료될 때까지 대기 (실제 프로덕션에서는 비동기 체인 유지 권장)
+                    .bodyToMono(GeminiDtos.GeminiResponse.class)
+                    .block();
 
             // 5. 응답에서 텍스트 추출
             if (response != null && !response.candidates().isEmpty()) {
-                String responseText = response.candidates().get(0).content().parts().get(0).text();
+                String responseText = response.candidates().getFirst().content().parts().getFirst().text();
                 log.info("Received response from Gemini API.");
                 return responseText;
             } else {

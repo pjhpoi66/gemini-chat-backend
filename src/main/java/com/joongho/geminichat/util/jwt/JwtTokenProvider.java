@@ -44,10 +44,8 @@ public class JwtTokenProvider {
 
         try {
             Instant now = Instant.now();
-            // Access Token 만료 시간 (예: 1시간)
             Instant accessTokenExpiresIn = now.plusMillis(expiration);
 
-            // Access Token 생성
             return Jwts.builder()
                     .subject(authentication.getName())
                     .claim("auth", authorities)

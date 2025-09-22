@@ -22,7 +22,6 @@ public class ChatController {
     private final ChatService chatService;
     private final UserRepository userRepository;
 
-    // --- 1. 새 채팅방 만들기 (수정) ---
     @PostMapping
     public ResponseEntity<ChatDtos.SessionResponse> createChat(
             Authentication authentication,
@@ -36,7 +35,6 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ChatDtos.SessionResponse(newSession));
     }
 
-    // --- 2. 기존 채팅방 목록 불러오기 (수정) ---
     @GetMapping
     public ResponseEntity<List<ChatDtos.SessionResponse>> getChatSessions(Authentication authentication) {
         String username = authentication.getName();
@@ -48,7 +46,6 @@ public class ChatController {
         return ResponseEntity.ok(sessions);
     }
 
-    // --- 3. 기존 채팅방 대화 기록 불러오기 (수정) ---
     @GetMapping("/{sessionId}/messages")
     public ResponseEntity<ChatDtos.MessageHistoryResponse> getChatHistory(
             Authentication authentication,
@@ -63,7 +60,6 @@ public class ChatController {
         return ResponseEntity.ok(history);
     }
 
-    // --- 4. 새 메시지 보내기 (수정) ---
     @PostMapping("/{sessionId}/messages")
     public ResponseEntity<ChatDtos.MessageResponse> postMessage(
             Authentication authentication,
