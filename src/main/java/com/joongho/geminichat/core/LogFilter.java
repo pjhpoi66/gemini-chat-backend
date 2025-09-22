@@ -25,7 +25,7 @@ public class LogFilter implements Filter {
 
         log.info("FILTER [REQUEST]  {} ", requestURI);
 
-        log.debug("ec2URL = {}", ec2Url);
+        log.info("ec2URL = {}", ec2Url);
 
         chain.doFilter(request, response);
 
