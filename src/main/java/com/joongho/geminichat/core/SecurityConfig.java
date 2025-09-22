@@ -62,6 +62,7 @@ public class SecurityConfig {
         // 허용할 출처(Origin)를 코드에 직접 명시합니다.
         configuration.setAllowedOrigins(Arrays.asList(
                 "https://joonghopark-gemchat.com",
+                "joonghopark-gemchat.com",
                 "http://localhost:3000"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
