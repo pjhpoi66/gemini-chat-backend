@@ -33,6 +33,8 @@ public class SecurityConfig {
     public SecurityConfig (JwtTokenProvider jwtTokenProvider, @Value("${ec2.url}") String ec2Url) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.ec2Url = ec2Url;
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        System.out.println("ec2Url: " + ec2Url);
     }
 
     @Bean
