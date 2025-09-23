@@ -16,11 +16,8 @@ public class GeminiChatApplication {
         SpringApplication.run(GeminiChatApplication.class, args);
 
         log.info("=========================================================");
-        log.info("=========================================================");
-        log.info("=========================================================");
         log.info("Build Instance : {}", SpringApplication.class.getName());
         log.info("Build Time : {}", LocalDateTime.now());
-        log.info("=========================================================");
         log.info("=========================================================");
     }
 
