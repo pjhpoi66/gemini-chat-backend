@@ -11,7 +11,7 @@ COPY . .
 # Gradle을 사용하여 실행 권한을 부여하고 프로젝트를 빌드합니다.
 # 빌드 캐시를 활용하여 다음 빌드부터 속도를 높입니다.
 RUN chmod +x ./gradlew
-RUN ./gradlew build --no-daemon
+RUN ./gradlew clean build --no-daemon
 
 
 # --- 2. 실행 단계 (Final Stage) ---

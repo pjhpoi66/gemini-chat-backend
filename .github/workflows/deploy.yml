@@ -1,4 +1,4 @@
-name: Deploy Backend to EC2 with Docker
+name: Deploy Backend to Dev Server
 
 on:
   push:
@@ -8,21 +8,23 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to EC2 instance
+      - name: Deploy to Dev
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ec2-user/gemini-chat-backend
+            cd /home/pjhpoi66/gemini-chat/gemini-chat-backend
             
             git pull
             
-            docker build -t gemini-backend .
-            
             docker stop gemini-backend-prod || true
             docker rm gemini-backend-prod || true
-            docker rmi gemini-backend-prod || true
+            docker rmi gemini-backend || true
+            
+            docker image prune -a -f
+            
+            docker build --no-cache -t gemini-backend .
             
             docker run -d --restart always --network=host --name gemini-backend-prod gemini-backend
