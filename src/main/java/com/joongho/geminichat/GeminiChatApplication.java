@@ -20,6 +20,7 @@ public class GeminiChatApplication {
         log.info("Build Instance : {}", SpringApplication.class.getName());
         log.info("Build Time : {}", LocalDateTime.now());
         log.info("=========================================================");
+        log.info("=========================================================");
     }
 
 }
