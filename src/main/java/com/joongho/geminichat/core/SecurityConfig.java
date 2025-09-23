@@ -4,6 +4,7 @@ import com.joongho.geminichat.util.jwt.JwtAuthenticationFilter;
 import com.joongho.geminichat.util.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,10 +28,15 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @Slf4j
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final String frontEndUrl;
+
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider, @Value("${frontend.url.list}") String frontEndUrl) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.frontEndUrl = frontEndUrl;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -61,12 +67,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
+        List<String> urlList = Arrays.asList(frontEndUrl.split(","));
+
         // 허용할 출처(Origin)를 코드에 직접 명시합니다.
-        configuration.setAllowedOrigins(Arrays.asList(
-                "https://joonghopark-gemchat.com",
-                "joonghopark-gemchat.com",
-                "http://localhost:3000"
-        ));
+        configuration.setAllowedOrigins(urlList);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
