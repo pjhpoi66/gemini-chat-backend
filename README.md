@@ -2,7 +2,7 @@
 
 Google Gemini API를 사용하는 캐릭터 채팅 웹 애플리케이션의 백엔드 서버입니다. RESTful API를 통해 사용자 인증, 채팅 데이터 관리, Gemini API 연동 기능을 제공합니다.
 
-https://joonghopark-gemchat.com
+https://minga666.com
 
 ## 주요 기능
 
