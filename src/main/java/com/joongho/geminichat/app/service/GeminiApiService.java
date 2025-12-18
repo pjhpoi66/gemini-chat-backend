@@ -28,7 +28,7 @@ public class GeminiApiService {
     }
 
     public String generateResponse(String persona, List<ChatMessage> history) {
-        log.info("Requesting response from Gemini API...");
+        log.info("Requesting response from Gemini API... ");
 
         // 1. 페르소나 설정 (System Instruction)
         GeminiDtos.Content systemInstruction = new GeminiDtos.Content(
