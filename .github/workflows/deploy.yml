@@ -27,4 +27,4 @@ jobs:
             
             docker build --no-cache -t gemini-backend .
             
-            docker run -d --restart always --network=host --name gemini-backend-prod gemini-backend
+            docker run -d -e "SPRING_PROFILES_ACTIVE=prod" --restart always --network=host --name gemini-backend-prod gemini-backend
